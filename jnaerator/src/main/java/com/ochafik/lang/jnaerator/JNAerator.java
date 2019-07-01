@@ -196,7 +196,9 @@ public class JNAerator {
 
     public static void main(String[] argsArray) {
 //        argsArray = "-library foo -dependencies bar,baz /Users/ochafik/test.h -mode Directory -o /Users/ochafik/tmp".split(" ");
-//        argsArray = new String[] { "/Users/ochafik/github/nativelibs4java/libraries/tmp/glib/config.jnaerator", "-mode", "Directory", "-f", "-o", "/Users/ochafik/github/nativelibs4java/libraries/tmp/glib" };
+          argsArray = new String[] { "E:\\video\\config.jnaerator",
+          "E:\\video\\HWPuSDK.h",
+          "E:\\video\\HWPuSDK.dll"};
 //        argsArray = new String[] { "/Users/ochafik/tmp/test.h", "-T__be16=short", "-mode", "Directory", "-f", "-o", "/Users/ochafik/github/nativelibs4java/libraries/jnaerator/test", "-v" };
 //        argsArray = new String[] { "/Users/ochafik/tmp/test.h", "-T__be16=short", "-mode", "Directory", "-f", "-o", "/Users/ochafik/github/nativelibs4java/libraries/jnaerator/test", "-v", "-Dfoo" };
 //        argsArray = new String[] { "-mode", "Jar", "-f", "-o", "/Users/ochafik/github/nativelibs4java/libraries/tmp", "/Users/ochafik/github/nativelibs4java/libraries/OpenCL/OpenCL4Java/src/main/jnaerator/config.jnaerator" };
