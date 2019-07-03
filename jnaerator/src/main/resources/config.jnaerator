@@ -1,0 +1,1 @@
+-runtime JNA  -mode Maven -o jna_code -package com.summit.sdk.huawei  -mavenArtifactId cbb_video -library HWPuSDK
