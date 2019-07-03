@@ -18,53 +18,89 @@
  */
 package com.ochafik.lang.jnaerator;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.regex.Pattern;
-
-import org.rococoa.AlreadyRetained;
-import org.rococoa.cocoa.foundation.NSObject;
-
-import com.ochafik.lang.jnaerator.JNAeratorConfig.GenFeatures;
-import com.ochafik.lang.jnaerator.parser.*;
-import com.ochafik.lang.jnaerator.parser.Enum;
-import com.ochafik.lang.jnaerator.parser.Statement.Block;
-import com.ochafik.lang.jnaerator.parser.StoredDeclarations.*;
-import com.ochafik.lang.jnaerator.parser.TypeRef.*;
-import com.ochafik.lang.jnaerator.parser.Expression.*;
-import com.ochafik.lang.jnaerator.parser.Function.Type;
-import com.ochafik.lang.jnaerator.parser.DeclarationsHolder.ListWrapper;
-import com.ochafik.lang.jnaerator.parser.Declarator.*;
 import com.nativelibs4java.jalico.CompoundCollection;
 import com.nativelibs4java.jalico.Pair;
-import com.ochafik.util.string.StringUtils;
-
-import java.net.URL;
-import java.net.URLConnection;
-import java.text.MessageFormat;
-import static com.ochafik.lang.jnaerator.parser.ElementsHelper.*;
-import static com.ochafik.lang.jnaerator.TypeConversion.*;
+import com.ochafik.lang.jnaerator.JNAeratorConfig.GenFeatures;
+import com.ochafik.lang.jnaerator.parser.Annotation;
+import com.ochafik.lang.jnaerator.parser.Arg;
+import com.ochafik.lang.jnaerator.parser.Declaration;
+import com.ochafik.lang.jnaerator.parser.DeclarationsHolder;
+import com.ochafik.lang.jnaerator.parser.DeclarationsHolder.ListWrapper;
+import com.ochafik.lang.jnaerator.parser.Declarator;
+import com.ochafik.lang.jnaerator.parser.Declarator.DirectDeclarator;
+import com.ochafik.lang.jnaerator.parser.Declarator.PointerStyle;
+import com.ochafik.lang.jnaerator.parser.Element;
+import com.ochafik.lang.jnaerator.parser.EmptyDeclaration;
+import com.ochafik.lang.jnaerator.parser.Enum;
+import com.ochafik.lang.jnaerator.parser.Expression;
+import com.ochafik.lang.jnaerator.parser.Expression.AssignmentOperator;
+import com.ochafik.lang.jnaerator.parser.Expression.BinaryOperator;
+import com.ochafik.lang.jnaerator.parser.Expression.EmptyArraySize;
+import com.ochafik.lang.jnaerator.parser.Expression.FunctionCall;
+import com.ochafik.lang.jnaerator.parser.Expression.MemberRefStyle;
+import com.ochafik.lang.jnaerator.parser.Function;
 import com.ochafik.lang.jnaerator.parser.Function.SignatureType;
-import com.ochafik.lang.jnaerator.parser.Identifier.SimpleIdentifier;
+import com.ochafik.lang.jnaerator.parser.Function.Type;
+import com.ochafik.lang.jnaerator.parser.Identifier;
+import com.ochafik.lang.jnaerator.parser.ModifiableElement;
+import com.ochafik.lang.jnaerator.parser.Modifier;
+import com.ochafik.lang.jnaerator.parser.ModifierType;
+import com.ochafik.lang.jnaerator.parser.Printer;
+import com.ochafik.lang.jnaerator.parser.Statement;
+import com.ochafik.lang.jnaerator.parser.Statement.Block;
+import com.ochafik.lang.jnaerator.parser.StoredDeclarations.TypeDef;
+import com.ochafik.lang.jnaerator.parser.Struct;
+import com.ochafik.lang.jnaerator.parser.TaggedTypeRefDeclaration;
+import com.ochafik.lang.jnaerator.parser.TypeRef;
+import com.ochafik.lang.jnaerator.parser.TypeRef.ArrayRef;
+import com.ochafik.lang.jnaerator.parser.TypeRef.FunctionSignature;
+import com.ochafik.lang.jnaerator.parser.TypeRef.Primitive;
+import com.ochafik.lang.jnaerator.parser.TypeRef.SimpleTypeRef;
+import com.ochafik.lang.jnaerator.parser.TypeRef.TaggedTypeRef;
+import com.ochafik.lang.jnaerator.parser.VariablesDeclaration;
 import com.ochafik.lang.jnaerator.runtime.LibraryExtractor;
 import com.ochafik.lang.jnaerator.runtime.MangledFunctionMapper;
+import com.ochafik.util.string.StringUtils;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.PointerType;
 import com.sun.jna.win32.StdCallLibrary;
+import org.rococoa.AlreadyRetained;
+import org.rococoa.cocoa.foundation.NSObject;
+
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
+
+import static com.ochafik.lang.jnaerator.TypeConversion.EnumItemResult;
+import static com.ochafik.lang.jnaerator.TypeConversion.TypeConversionMode;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.block;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.cast;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.decl;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.expr;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.ident;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.memberRef;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.methodCall;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.opaqueExpr;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.stat;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.thisRef;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.typeRef;
+import static com.ochafik.lang.jnaerator.parser.ElementsHelper.varRef;
 
 public class JNADeclarationsConverter extends DeclarationsConverter {
 
@@ -946,7 +982,7 @@ public class JNADeclarationsConverter extends DeclarationsConverter {
                         stat(methodCall(varRef(fieldOrderName), "addAll", selfList)),
                         new Statement.Return(varRef(fieldOrderName)));
             }
-            TypeRef listRef = typeRef(ident(List.class, expr(typeRef("?"))));
+            TypeRef listRef = typeRef(ident(List.class, expr(typeRef("String"))));
             Function getFieldOrder = new Function(
                     Type.JavaMethod, ident(getFieldOrderName), listRef)
                     .setBody(getFieldOrderImpl).addModifiers(ModifierType.Protected);
